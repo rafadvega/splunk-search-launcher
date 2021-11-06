@@ -121,6 +121,25 @@ def delete(search_name):
 	print ("\nSearch deleted!")
 
 
+def cancel():
+	try:			
+		search_name = input('Enter search name: ')
+		db = loadDB()
+		if not search_name in db.keys():
+			print("The search name doesn't exists\n")
+			return False
+		sid = db[search_name]
+		service = splunkConnection()
+		job = service.job(sid)
+		job.cancel()
+		print ("Job canceled!\n")
+		sure = input("Do you want delete search from local database? y/(n): ")
+		if sure == "Y" or sure == "y":
+			delete(search_name)
+	except Exception as e:
+		print("\nError:\t" + str(e))
+
+
 def loadSid():
 	search_name = input('Enter search name: ')
 	if search_name in loadDB().keys():
@@ -196,10 +215,9 @@ def download():
 	except Exception as e:
 		print("\nError:\t" + str(e))
 
+
 def main():
-
 	printLogo()
-
 	while True:
 
 		option = input('>> ')
