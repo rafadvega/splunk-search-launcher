@@ -5,6 +5,7 @@ from prettytable import PrettyTable
 import os
 from getpass import getpass
 import datetime
+import pandas as pd
 
 __author__ = "Rafa de Vega"
 
@@ -33,9 +34,22 @@ def printHelp():
     print (" download -\tdownload search results")
     print (" help     -\tprint help")
     print (" list     -\tlist searches")
+    print (" login     -\tLogin splunk with new credentials")
     print (" load     -\tload search from sid")
     print (" status   -\tview search status")  
     print (" quit     -\texit\n")
+
+
+def login():
+	global username
+	global password
+	username = input('splunk user: ')
+	password = getpass('splunk pass: ')
+	try:
+		splunkConnection()
+	except Exception as e:
+		print(e)
+		login()
 
 
 def splunkConnection():
@@ -129,6 +143,7 @@ def clear():
 	else:
 		print("\nDon't touch my database!!\n")
 
+
 def status():
     try:
         search_name = input('Enter search name: ')
@@ -152,6 +167,34 @@ def status():
 
     except Exception as e:
         print("\nError:\t" + str(e))
+
+
+def download():
+	try:
+		search_name = input('Enter search name: ')
+		db = loadDB()
+		if not search_name in db.keys():
+			print("The search name doesn't exists\n")
+			return False
+		sid = db[search_name]
+		dump_filename = input('Enter file name to save results: ')
+		service = splunkConnection()
+		job = service.job(sid)
+
+		if bool(int(job['isDone'])) == True:
+			rr = results.ResultsReader(job.results(count=0))
+			df = pd.DataFrame(list(rr))
+			if(int(job['resultCount']) > 0):
+				print ("\nSaving results...")
+				df.to_csv(dump_filename, index=False)
+				print ("\nDownloaded!")
+			else:
+				print("The search has 0 results\n")            
+		else:
+			print("\nThe search is not finished\n")
+
+	except Exception as e:
+		print("\nError:\t" + str(e))
 
 def main():
 
@@ -178,6 +221,8 @@ def main():
 		    listDB()
 		elif option == 'load':
 		    loadSid()
+		elif option == 'login':
+			login()
 		elif option == 'quit' or option == 'exit':
 		    print('\n Goodbye!!')
 		    exit()
