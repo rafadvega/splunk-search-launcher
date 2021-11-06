@@ -101,6 +101,7 @@ def delete(search_name):
             print("The search name doesn't exists\n")
             return False
 	del db[search_name]
+	saveDB(db)
 	print ("\nSearch deleted!")
 
 
@@ -118,21 +119,13 @@ def loadSid():
 	print("\nSearch Loaded\n")
 
 
-def create():
-	print("pending...")
-
-
-def status():
-	print("pending...")
-
-
-def download():
-	print("pending...")
-
-
-def cancel():
-	print("pending...")
-
+def clear():
+	sure = input("This option deleted all local database, but not the splunk searches. Are you sure? y/(n): ")
+	if sure == "Y" or sure == "y":
+		print("\nBye Bye dabase...\n")
+		os.remove(db_name)
+	else:
+		print("\nDon't touch my database!!\n")
 
 def main():
 
@@ -146,11 +139,13 @@ def main():
 		elif option == 'status':
 		    status()
 		elif option == 'delete':
-		    delete()
+		    delete('')
 		elif option == 'download':
 		    download()
 		elif option == 'cancel':
 		    cancel()
+		elif option == 'clear':
+		    clear()
 		elif option == 'help':
 		    printHelp()
 		elif option == 'list':
