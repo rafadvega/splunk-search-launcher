@@ -106,7 +106,14 @@ def cancel():
 
 
 def loadSid():
-	print("pending...")
+	search_name = input('Enter search name: ')
+	search_sid = input('Enter search sid: ')
+	saveDB([search_name,search_sid])
+	search = PrettyTable()
+	search.field_names = ['Search', 'Sid']
+	search.add_row([search_name,search_sid])
+	print(search)
+	print("\nSearch Loaded\n")
 
 
 def main():
@@ -120,6 +127,8 @@ def main():
 		    create()
 		elif option == 'status':
 		    status()
+		elif option == 'delete':
+		    delete()
 		elif option == 'download':
 		    download()
 		elif option == 'cancel':
