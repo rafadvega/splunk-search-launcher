@@ -3,6 +3,8 @@ import splunklib.results as results
 import pickle
 from prettytable import PrettyTable
 import os
+from getpass import getpass
+import datetime
 
 __author__ = "Rafa de Vega"
 
@@ -126,6 +128,30 @@ def clear():
 		os.remove(db_name)
 	else:
 		print("\nDon't touch my database!!\n")
+
+def status():
+    try:
+        search_name = input('Enter search name: ')
+        db = loadDB()
+        sid = db[search_name]
+        service = splunkConnection()
+        status = PrettyTable()
+        status.field_names = ['is Done','State', 'Progress', 'Scanned', 'Matched', 'Results', 'Duration', 'Sid']
+        
+        job = service.job(sid)
+        status.add_row([bool(job['isDone']),job['dispatchState'], str(round(float(job['doneProgress'])*100,0))+"%", job['scanCount'], job['eventCount'], job['resultCount'], str(datetime.timedelta(seconds=round(float(job['runDuration']),0))), sid])
+        print()
+        print(status)
+        print('\nMessages:\n')
+        messages = job['messages']
+        for level in messages:
+        	print(level)
+        	for message in messages[level]:
+        		print(message)
+        print()
+
+    except Exception as e:
+        print("\nError:\t" + str(e))
 
 def main():
 
