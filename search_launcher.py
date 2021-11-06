@@ -216,6 +216,25 @@ def download():
 		print("\nError:\t" + str(e))
 
 
+def create():
+	try:
+		search_name = input('Enter search name: ')
+		if search_name in loadDB().keys():
+			print("The search name already exists\n")
+			return False
+		searchquery = input('Enter splunk search (oneline format):')
+		earliest_time = input('Enter earliest time (format: 2021-11-03T0:0:0)": ')
+		latest_time = input('Enter latest time (format: 2021-11-04T0:0:0): ')
+		service = splunkConnection()
+		kwargs_normalsearch = {"exec_mode": "normal", "earliest_time": earliest_time, "latest_time": latest_time}		
+		job = service.jobs.create(searchquery, **kwargs_normalsearch)
+		saveDB([search_name, job['sid']])
+		print("Done!")
+
+	except Exception as e:
+		print("\nError:\t" + str(e))
+
+
 def main():
 	printLogo()
 	while True:
