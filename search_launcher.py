@@ -11,7 +11,7 @@ def printLogo():
  ___  ___  __ _ _ __ ___| |__   | | __ _ _   _ _ __   ___| |__   ___ _ __ 
 / __|/ _ \/ _` | '__/ __| '_ \  | |/ _` | | | | '_ \ / __| '_ \ / _ \ '__|
 \__ \  __/ (_| | | | (__| | | | | | (_| | |_| | | | | (__| | | |  __/ |   
-|___/\___|\__,_|_|  \___|_| |_| |_|\__,_|\__,_|_| |_|\___|_| |_|\___|_| \n\n""")
+|___/\___|\__,_|_|  \___|_| |_| |_|\__,_|\__,_|_| |_|\___|_| |_|\___|_|\n\n""")
 
 
 ######### CONFIGURATION ##########
@@ -24,14 +24,17 @@ db_name = 'launcher.db'
 
 
 def printHelp():
-    print ("\n cancel   - cancel search jobs and delete local data of search")
-    print (" create   - create new search")
-    print (" download - download search results")
-    print (" help     - print help")
-    print (" list     - list searches")
-    print (" load     - load search from sid")
-    print (" status   - view search status")  
-    print (" quit     - exit\n")
+    print ("\n cancel   -\tcancel search jobs and delete local data of search")
+    print (" clear    -\tclear local database")
+    print (" create   -\tcreate new search")
+    print (" delete   -\tdelete search from local database")
+    print (" download -\tdownload search results")
+    print (" help     -\tprint help")
+    print (" list     -\tlist searches")
+    print (" load     -\tload search from sid")
+    print (" status   -\tview search status")  
+    print (" quit     -\texit\n")
+
 
 def splunkConnection():
     #Check credentials
@@ -89,6 +92,32 @@ def listDB():
 	    print("\nError:\t" + str(e))
 
 
+def delete(search_name):
+	if not search_name:
+		print("Warning. This option doesn't delete search from splunk.")
+		search_name = input('Enter search name: ')
+	db = loadDB()
+	if not search_name in db.keys():
+            print("The search name doesn't exists\n")
+            return False
+	del db[search_name]
+	print ("\nSearch deleted!")
+
+
+def loadSid():
+	search_name = input('Enter search name: ')
+	if search_name in loadDB().keys():
+            print("The search name already exists\n")
+            return False
+	search_sid = input('Enter search sid: ')
+	saveDB([search_name,search_sid])
+	search = PrettyTable()
+	search.field_names = ['Search', 'Sid']
+	search.add_row([search_name,search_sid])
+	print(search)
+	print("\nSearch Loaded\n")
+
+
 def create():
 	print("pending...")
 
@@ -103,17 +132,6 @@ def download():
 
 def cancel():
 	print("pending...")
-
-
-def loadSid():
-	search_name = input('Enter search name: ')
-	search_sid = input('Enter search sid: ')
-	saveDB([search_name,search_sid])
-	search = PrettyTable()
-	search.field_names = ['Search', 'Sid']
-	search.add_row([search_name,search_sid])
-	print(search)
-	print("\nSearch Loaded\n")
 
 
 def main():
