@@ -1,1 +1,1 @@
-"## Splunk Search Launcher" 
+## Splunk Search Launcher
