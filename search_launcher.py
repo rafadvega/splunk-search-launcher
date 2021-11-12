@@ -27,17 +27,18 @@ db_name = 'launcher.db'
 
 
 def printHelp():
-    print ("\n cancel   -\tcancel search jobs and delete local data of search")
-    print (" clear    -\tclear local database")
-    print (" create   -\tcreate new search")
-    print (" delete   -\tdelete search from local database")
-    print (" download -\tdownload search results")
-    print (" help     -\tprint help")
-    print (" list     -\tlist searches")
+    print ("\n cancel    -\tcancel search jobs and delete local data of search")
+    print (" clear     -\tclear local database")
+    print (" create    -\tcreate new search")
+    print (" delete    -\tdelete search from local database")
+    print (" download  -\tdownload search results")
+    print (" help      -\tprint help")
+    print (" list      -\tlist searches")
     print (" login     -\tLogin splunk with new credentials")
-    print (" load     -\tload search from sid")
-    print (" status   -\tview search status")  
-    print (" quit     -\texit\n")
+    print (" load      -\tload search from sid")
+    print (" ttl       -\tchange search time to live")
+    print (" status    -\tview search status")  
+    print (" quit      -\texit\n")
     print (" Press Ctrl+C to cancel operation\n")
 
 
@@ -49,7 +50,7 @@ def login():
 		password = getpass('splunk pass: ')
 		splunkConnection()
 	except KeyboardInterrupt:
-		print("\nOperation canceled")
+		print("\nOperation canceled\n")
 	except Exception as e:
 		print(e)
 		login()
@@ -111,6 +112,27 @@ def listDB():
 	    print("\nError:\t" + str(e))
 
 
+def changeTTL():
+	try:
+		search_name = input('Enter search name: ')
+		new_ttl = int(input('Enter new ttl in seconds: '))
+		db = loadDB()
+		sid = db[search_name]
+		service = splunkConnection()
+		ttl_table = PrettyTable()
+		ttl_table.field_names = ['Search','Sid', 'Old TTL', 'New TTL']      
+		job = service.job(sid)
+		job.set_ttl(new_ttl)
+		ttl_table.add_row([search_name,sid, str(datetime.timedelta(seconds=round(float(job['ttl']),0))), str(datetime.timedelta(seconds=round(float(new_ttl),0)))])
+		print()
+		print(ttl_table)
+	    
+	except KeyboardInterrupt:
+		print("\nOperation canceled\n")
+	except Exception as e:
+		print("\nError:\t" + str(e))
+
+
 def delete(search_name):
 	try:
 		if not search_name:
@@ -124,7 +146,7 @@ def delete(search_name):
 		saveDB(db)
 		print ("\nSearch deleted!")
 	except KeyboardInterrupt:
-		print("\nOperation canceled")
+		print("\nOperation canceled\n")
 	except Exception as e:
 		print("\nError:\t" + str(e))
 
@@ -145,7 +167,7 @@ def cancel():
 		if sure == "Y" or sure == "y":
 			delete(search_name)
 	except KeyboardInterrupt:
-		print("\nOperation canceled")
+		print("\nOperation canceled\n")
 	except Exception as e:
 		print("\nError:\t" + str(e))
 
@@ -164,7 +186,7 @@ def loadSid():
 		print(search)
 		print("\nSearch Loaded\n")
 	except KeyboardInterrupt:
-		print("\nOperation canceled")
+		print("\nOperation canceled\n")
 	except Exception as e:
 		print("\nError:\t" + str(e))
 
@@ -185,10 +207,9 @@ def status():
         sid = db[search_name]
         service = splunkConnection()
         status = PrettyTable()
-        status.field_names = ['is Done','State', 'Progress', 'Scanned', 'Matched', 'Results', 'Duration', 'Sid']
-        
+        status.field_names = ['is Done','State', 'Progress', 'Scanned', 'Matched', 'Results', 'Duration', 'ttl', 'Sid']      
         job = service.job(sid)
-        status.add_row([bool(job['isDone']),job['dispatchState'], str(round(float(job['doneProgress'])*100,0))+"%", job['scanCount'], job['eventCount'], job['resultCount'], str(datetime.timedelta(seconds=round(float(job['runDuration']),0))), sid])
+        status.add_row([bool(int(job['isDone'])),job['dispatchState'], str(round(float(job['doneProgress'])*100,0))+"%", job['scanCount'], job['eventCount'], job['resultCount'], str(datetime.timedelta(seconds=round(float(job['runDuration']),0))), str(datetime.timedelta(seconds=round(float(job['ttl']),0))), sid])
         print()
         print(status)
         print('\nMessages:\n')
@@ -199,7 +220,7 @@ def status():
         		print(message)
         print()
     except KeyboardInterrupt:
-    	print("\nOperation canceled")
+    	print("\nOperation canceled\n")
     except Exception as e:
     	print("\nError:\t" + str(e))
 
@@ -228,7 +249,7 @@ def download():
 		else:
 			print("\nThe search is not finished\n")
 	except KeyboardInterrupt:
-		print("\nOperation canceled")
+		print("\nOperation canceled\n")
 	except Exception as e:
 		print("\nError:\t" + str(e))
 
@@ -245,12 +266,11 @@ def create():
 		service = splunkConnection()
 		kwargs_normalsearch = {"exec_mode": "normal", "earliest_time": earliest_time, "latest_time": latest_time}		
 		job = service.jobs.create(searchquery, **kwargs_normalsearch)
-		job.set_ttl(1000)
-		job.refresh()
+		job.set_ttl(86400)
 		saveDB([search_name, job['sid']])
 		print("Done!")
 	except KeyboardInterrupt:
-		print("\nOperation canceled")
+		print("\nOperation canceled\n")
 	except Exception as e:
 		print("\nError:\t" + str(e))
 
@@ -281,6 +301,8 @@ def main():
 			    loadSid()
 			elif option == 'login':
 				login()
+			elif option == 'ttl':
+				changeTTL()
 			elif option == 'quit' or option == 'exit':
 			    print('\n Goodbye!!')
 			    exit()
@@ -288,7 +310,7 @@ def main():
 			    print("Invalid option. Plese enter a valid comand or 'help' to print all commands.")
 
 	except KeyboardInterrupt:
-		print("\nOperation canceled")
+		print('\n Goodbye!!')
 
 
 if __name__ == "__main__":
