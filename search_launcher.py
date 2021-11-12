@@ -38,15 +38,18 @@ def printHelp():
     print (" load     -\tload search from sid")
     print (" status   -\tview search status")  
     print (" quit     -\texit\n")
+    print (" Press Ctrl+C to cancel operation\n")
 
 
 def login():
-	global username
-	global password
-	username = input('splunk user: ')
-	password = getpass('splunk pass: ')
 	try:
+		global username
+		global password
+		username = input('splunk user: ')
+		password = getpass('splunk pass: ')
 		splunkConnection()
+	except KeyboardInterrupt:
+		print("\nOperation canceled")
 	except Exception as e:
 		print(e)
 		login()
@@ -109,16 +112,21 @@ def listDB():
 
 
 def delete(search_name):
-	if not search_name:
-		print("Warning. This option doesn't delete search from splunk.")
-		search_name = input('Enter search name: ')
-	db = loadDB()
-	if not search_name in db.keys():
-            print("The search name doesn't exists\n")
-            return False
-	del db[search_name]
-	saveDB(db)
-	print ("\nSearch deleted!")
+	try:
+		if not search_name:
+			print("Warning. This option doesn't delete search from splunk.")
+			search_name = input('Enter search name: ')
+		db = loadDB()
+		if not search_name in db.keys():
+	            print("The search name doesn't exists\n")
+	            return False
+		del db[search_name]
+		saveDB(db)
+		print ("\nSearch deleted!")
+	except KeyboardInterrupt:
+		print("\nOperation canceled")
+	except Exception as e:
+		print("\nError:\t" + str(e))
 
 
 def cancel():
@@ -136,22 +144,29 @@ def cancel():
 		sure = input("Do you want delete search from local database? y/(n): ")
 		if sure == "Y" or sure == "y":
 			delete(search_name)
+	except KeyboardInterrupt:
+		print("\nOperation canceled")
 	except Exception as e:
 		print("\nError:\t" + str(e))
 
 
 def loadSid():
-	search_name = input('Enter search name: ')
-	if search_name in loadDB().keys():
-            print("The search name already exists\n")
-            return False
-	search_sid = input('Enter search sid: ')
-	saveDB([search_name,search_sid])
-	search = PrettyTable()
-	search.field_names = ['Search', 'Sid']
-	search.add_row([search_name,search_sid])
-	print(search)
-	print("\nSearch Loaded\n")
+	try:
+		search_name = input('Enter search name: ')
+		if search_name in loadDB().keys():
+			print("The search name already exists\n")
+			return False
+		search_sid = input('Enter search sid: ')
+		saveDB([search_name,search_sid])
+		search = PrettyTable()
+		search.field_names = ['Search', 'Sid']
+		search.add_row([search_name,search_sid])
+		print(search)
+		print("\nSearch Loaded\n")
+	except KeyboardInterrupt:
+		print("\nOperation canceled")
+	except Exception as e:
+		print("\nError:\t" + str(e))
 
 
 def clear():
@@ -183,9 +198,10 @@ def status():
         	for message in messages[level]:
         		print(message)
         print()
-
+    except KeyboardInterrupt:
+    	print("\nOperation canceled")
     except Exception as e:
-        print("\nError:\t" + str(e))
+    	print("\nError:\t" + str(e))
 
 
 def download():
@@ -211,7 +227,8 @@ def download():
 				print("The search has 0 results\n")            
 		else:
 			print("\nThe search is not finished\n")
-
+	except KeyboardInterrupt:
+		print("\nOperation canceled")
 	except Exception as e:
 		print("\nError:\t" + str(e))
 
@@ -228,43 +245,50 @@ def create():
 		service = splunkConnection()
 		kwargs_normalsearch = {"exec_mode": "normal", "earliest_time": earliest_time, "latest_time": latest_time}		
 		job = service.jobs.create(searchquery, **kwargs_normalsearch)
+		job.set_ttl(1000)
+		job.refresh()
 		saveDB([search_name, job['sid']])
 		print("Done!")
-
+	except KeyboardInterrupt:
+		print("\nOperation canceled")
 	except Exception as e:
 		print("\nError:\t" + str(e))
 
 
 def main():
 	printLogo()
-	while True:
+	try:
 
-		option = input('>> ')
-		if option == 'create':
-		    create()
-		elif option == 'status':
-		    status()
-		elif option == 'delete':
-		    delete('')
-		elif option == 'download':
-		    download()
-		elif option == 'cancel':
-		    cancel()
-		elif option == 'clear':
-		    clear()
-		elif option == 'help':
-		    printHelp()
-		elif option == 'list':
-		    listDB()
-		elif option == 'load':
-		    loadSid()
-		elif option == 'login':
-			login()
-		elif option == 'quit' or option == 'exit':
-		    print('\n Goodbye!!')
-		    exit()
-		else:
-		    print("Invalid option. Plese enter a valid comand or 'help' to print all commands.")
+		while True:
+			option = input('>> ')
+			if option == 'create':
+			    create()
+			elif option == 'status':
+			    status()
+			elif option == 'delete':
+			    delete('')
+			elif option == 'download':
+			    download()
+			elif option == 'cancel':
+			    cancel()
+			elif option == 'clear':
+			    clear()
+			elif option == 'help':
+			    printHelp()
+			elif option == 'list':
+			    listDB()
+			elif option == 'load':
+			    loadSid()
+			elif option == 'login':
+				login()
+			elif option == 'quit' or option == 'exit':
+			    print('\n Goodbye!!')
+			    exit()
+			else:
+			    print("Invalid option. Plese enter a valid comand or 'help' to print all commands.")
+
+	except KeyboardInterrupt:
+		print("\nOperation canceled")
 
 
 if __name__ == "__main__":
