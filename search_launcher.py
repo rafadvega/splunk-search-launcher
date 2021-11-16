@@ -207,9 +207,9 @@ def status():
         sid = db[search_name]
         service = splunkConnection()
         status = PrettyTable()
-        status.field_names = ['is Done','State', 'Progress', 'Scanned', 'Matched', 'Results', 'Duration', 'ttl', 'Sid']      
+        status.field_names = ['is Done','State', 'Progress', 'Scanned', 'Matched', 'Results', 'Duration', 'ttl', 'priority', 'Sid']      
         job = service.job(sid)
-        status.add_row([bool(int(job['isDone'])),job['dispatchState'], str(round(float(job['doneProgress'])*100,0))+"%", job['scanCount'], job['eventCount'], job['resultCount'], str(datetime.timedelta(seconds=round(float(job['runDuration']),0))), str(datetime.timedelta(seconds=round(float(job['ttl']),0))), sid])
+        status.add_row([bool(int(job['isDone'])),job['dispatchState'], str(round(float(job['doneProgress'])*100,0))+"%", job['scanCount'], job['eventCount'], job['resultCount'], str(datetime.timedelta(seconds=round(float(job['runDuration']),0))), str(datetime.timedelta(seconds=round(float(job['ttl']),0))), job['priority'], sid])
         print()
         print(status)
         print('\nMessages:\n')
@@ -260,6 +260,10 @@ def create():
 		if search_name in loadDB().keys():
 			print("The search name already exists\n")
 			return False
+		priority = input('Enter search priority (default = 5): ')
+		if priority == "":
+			priority = 5
+		priority = int(priority)
 		searchquery = input('Enter splunk search (oneline format):')
 		earliest_time = input('Enter earliest time (format: 2021-11-03T0:0:0)": ')
 		latest_time = input('Enter latest time (format: 2021-11-04T0:0:0): ')
@@ -267,6 +271,7 @@ def create():
 		kwargs_normalsearch = {"exec_mode": "normal", "earliest_time": earliest_time, "latest_time": latest_time}		
 		job = service.jobs.create(searchquery, **kwargs_normalsearch)
 		job.set_ttl(86400)
+		job.set_priority(priority)	
 		saveDB([search_name, job['sid']])
 		print("Done!")
 	except KeyboardInterrupt:
