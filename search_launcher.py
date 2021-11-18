@@ -36,6 +36,7 @@ def printHelp():
     print (" list      -\tlist searches")
     print (" login     -\tLogin splunk with new credentials")
     print (" load      -\tload search from sid")
+    print (" priority  -\tchange search priority")
     print (" ttl       -\tchange search time to live")
     print (" status    -\tview search status")  
     print (" quit      -\texit\n")
@@ -124,6 +125,27 @@ def changeTTL():
 		job = service.job(sid)
 		job.set_ttl(new_ttl)
 		ttl_table.add_row([search_name,sid, str(datetime.timedelta(seconds=round(float(job['ttl']),0))), str(datetime.timedelta(seconds=round(float(new_ttl),0)))])
+		print()
+		print(ttl_table)
+	    
+	except KeyboardInterrupt:
+		print("\nOperation canceled\n")
+	except Exception as e:
+		print("\nError:\t" + str(e))
+
+
+def changePriority():
+	try:
+		search_name = input('Enter search name: ')
+		new_priority = int(input('Enter new priority (0-10): '))
+		db = loadDB()
+		sid = db[search_name]
+		service = splunkConnection()
+		ttl_table = PrettyTable()
+		ttl_table.field_names = ['Search','Sid', 'Old priority', 'New priority']      
+		job = service.job(sid)
+		job.set_priority(new_priority)
+		ttl_table.add_row([search_name,sid, str(job['priority']), str(new_priority)])
 		print()
 		print(ttl_table)
 	    
@@ -264,13 +286,17 @@ def create():
 		if priority == "":
 			priority = 5
 		priority = int(priority)
+		ttl = input('Enter search ttl in seconds (default = 86400): ')
+		if ttl == "":
+			ttl = 86400
+		ttl = int(ttl)
 		searchquery = input('Enter splunk search (oneline format):')
 		earliest_time = input('Enter earliest time (format: 2021-11-03T0:0:0)": ')
 		latest_time = input('Enter latest time (format: 2021-11-04T0:0:0): ')
 		service = splunkConnection()
 		kwargs_normalsearch = {"exec_mode": "normal", "earliest_time": earliest_time, "latest_time": latest_time}		
 		job = service.jobs.create(searchquery, **kwargs_normalsearch)
-		job.set_ttl(86400)
+		job.set_ttl(ttl)
 		job.set_priority(priority)	
 		saveDB([search_name, job['sid']])
 		print("Done!")
@@ -308,6 +334,8 @@ def main():
 				login()
 			elif option == 'ttl':
 				changeTTL()
+			elif option == 'priority':
+				changePriority()
 			elif option == 'quit' or option == 'exit':
 			    print('\n Goodbye!!')
 			    exit()
